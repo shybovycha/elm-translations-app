@@ -9,7 +9,8 @@ import List
 import Http
 import Json.Decode exposing (Decoder)
 import Json.Encode
-import Delay
+import Process
+import Task
 
 type alias Translations = Dict String String
 
@@ -122,11 +123,11 @@ update msg model =
         _ -> (model, Cmd.none)
     SavedTranslations (Ok ()) ->
       case model of
-        Saving translations -> (Saved translations, Delay.after 2000 (LoadedTranslations (Ok translations)))
+        Saving translations -> (Saved translations, Process.sleep 2000 |> Task.perform (\_ -> LoadedTranslations (Ok translations)))
         _ -> (model, Cmd.none)
     SavedTranslations (Err httpError) ->
       case model of
-        Saving translations -> (NotSaved translations, Delay.after 2000 (LoadedTranslations (Ok translations)))
+        Saving translations -> (NotSaved translations, Process.sleep 2000 |> Task.perform (\_ -> LoadedTranslations (Ok translations)))
         _ -> (model, Cmd.none)
 
 main : Program () Model Msg
