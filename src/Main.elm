@@ -33,7 +33,7 @@ translationRow key value =
 -- Application stuff
 
 init : Model
-init = Dict.empty
+init = Dict.fromList [("hello", "cześć"), ("world", "świat")]
 
 view : Model -> Html Msg
 view model =
