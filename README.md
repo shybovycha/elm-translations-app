@@ -8,7 +8,7 @@ It is simply a page with a form, where user can provide translations for arbitra
 ## Building
 
 ```
-$ elm make src/Main.elm
+$ elm make src/Main.elm --output=dist/index.html
 ```
 
 ## Running
