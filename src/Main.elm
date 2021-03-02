@@ -2,7 +2,9 @@ module Main exposing (..)
 
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, text)
+import Html exposing (Html, div, text, input)
+import Html.Attributes
+import List
 
 type alias Translations = Dict String String
 
@@ -14,7 +16,11 @@ init : Model
 init = Dict.empty
 
 view : Model -> Html Msg
-view model = text "Hello, translations!"
+view model =
+  let
+    children = List.map (\(key, value) -> div [] [div [] [text key], div [] [input [Html.Attributes.value value] []]]) (Dict.toList model)
+  in
+    div [] children
 
 update : Msg -> Model -> Model
 update msg model =
