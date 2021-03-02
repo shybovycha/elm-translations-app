@@ -13,13 +13,14 @@ import Delay
 
 type alias Translations = Dict String String
 
-type SaveButtonState = IsSaving | WasSaved | NoSaving
+type SaveButtonState = IsSaving | WasSaved | WasNotSaved | NoSaving
 
 type Model = Loading
   | Error
   | Loaded Translations
   | Saving Translations
   | Saved Translations
+  | NotSaved Translations
 
 type Msg = LoadTranslations
   | LoadedTranslations (Result Http.Error Translations)
@@ -63,7 +64,8 @@ translationPageControls : SaveButtonState -> Html Msg
 translationPageControls saveButtonState =
   case saveButtonState of
     IsSaving -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "Saving..."] ]
-    WasSaved -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "✔️ Saved!"] ]
+    WasSaved -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "✅ Saved!"] ]
+    WasNotSaved -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "❌ Error"] ]
     _ -> div [] [ button [Html.Events.onClick SaveTranslations] [text "Save"] ]
 
 translationForm : Translations -> Html Msg
@@ -98,6 +100,7 @@ view model =
     Loaded translations -> div [] [ translationPage translations NoSaving ]
     Saving translations -> div [] [ translationPage translations IsSaving ]
     Saved translations -> div [] [ translationPage translations WasSaved ]
+    NotSaved translations -> div [] [ translationPage translations WasNotSaved ]
     Error -> div [] [text "Error loading translations!"]
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -123,7 +126,7 @@ update msg model =
         _ -> (model, Cmd.none)
     SavedTranslations (Err httpError) ->
       case model of
-        Saving translations -> (Loaded translations, Cmd.none)
+        Saving translations -> (NotSaved translations, Delay.after 2000 (LoadedTranslations (Ok translations)))
         _ -> (model, Cmd.none)
 
 main : Program () Model Msg
