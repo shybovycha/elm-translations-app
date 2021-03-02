@@ -9,13 +9,17 @@ import List
 import Http
 import Json.Decode exposing (Decoder)
 import Json.Encode
+import Delay
 
 type alias Translations = Dict String String
+
+type SaveButtonState = IsSaving | WasSaved | NoSaving
 
 type Model = Loading
   | Error
   | Loaded Translations
   | Saving Translations
+  | Saved Translations
 
 type Msg = LoadTranslations
   | LoadedTranslations (Result Http.Error Translations)
@@ -48,18 +52,19 @@ saveTranslations translations =
 
 -- View helpers
 
-translationPage : Translations -> Bool -> Html Msg
-translationPage translations isSaving =
+translationPage : Translations -> SaveButtonState -> Html Msg
+translationPage translations saveButtonState =
   div [] [
     translationForm translations,
-    translationPageControls isSaving
+    translationPageControls saveButtonState
   ]
 
-translationPageControls : Bool -> Html Msg
-translationPageControls isSaving =
-  if isSaving
-  then div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "Saving..."] ]
-  else div [] [ button [Html.Events.onClick SaveTranslations] [text "Save"] ]
+translationPageControls : SaveButtonState -> Html Msg
+translationPageControls saveButtonState =
+  case saveButtonState of
+    IsSaving -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "Saving..."] ]
+    WasSaved -> div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "✔️ Saved!"] ]
+    _ -> div [] [ button [Html.Events.onClick SaveTranslations] [text "Save"] ]
 
 translationForm : Translations -> Html Msg
 translationForm translations =
@@ -90,8 +95,9 @@ view : Model -> Html Msg
 view model =
   case model of
     Loading -> div [] [text "Loading..."]
-    Loaded translations -> div [] [ translationPage translations False ]
-    Saving translations -> div [] [ translationPage translations True ]
+    Loaded translations -> div [] [ translationPage translations NoSaving ]
+    Saving translations -> div [] [ translationPage translations IsSaving ]
+    Saved translations -> div [] [ translationPage translations WasSaved ]
     Error -> div [] [text "Error loading translations!"]
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -113,7 +119,7 @@ update msg model =
         _ -> (model, Cmd.none)
     SavedTranslations (Ok ()) ->
       case model of
-        Saving translations -> (Loaded translations, Cmd.none)
+        Saving translations -> (Saved translations, Delay.after 2000 (LoadedTranslations (Ok translations)))
         _ -> (model, Cmd.none)
     SavedTranslations (Err httpError) ->
       case model of
