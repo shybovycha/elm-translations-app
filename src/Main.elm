@@ -15,6 +15,7 @@ type alias Translations = Dict String String
 type Model = Loading
   | Error
   | Loaded Translations
+  | Saving Translations
 
 type Msg = LoadTranslations
   | LoadedTranslations (Result Http.Error Translations)
@@ -28,15 +29,15 @@ decodeTranslations : Decoder Translations
 decodeTranslations = Json.Decode.dict Json.Decode.string
 
 loadTranslations : Cmd Msg
-loadTranslations = 
+loadTranslations =
   Http.get {
     url = "https://elm-test.free.beeceptor.com/translations",
     expect = Http.expectJson LoadedTranslations decodeTranslations
   }
-  
+
 serializeTranslations : Translations -> Json.Encode.Value
 serializeTranslations translations = (Json.Encode.dict identity Json.Encode.string translations)
-  
+
 saveTranslations : Translations -> Cmd Msg
 saveTranslations translations =
   Http.post {
@@ -47,12 +48,16 @@ saveTranslations translations =
 
 -- View helpers
 
-translationPage : Translations -> Html Msg
-translationPage translations = 
+translationPage : Translations -> Bool -> Html Msg
+translationPage translations isSaving =
   div [] [
     translationForm translations,
-    button [Html.Events.onClick SaveTranslations] [text "Save"]
+    translationPageControls isSaving
   ]
+
+translationPageControls : Bool -> Html Msg
+translationPageControls isSaving =
+  div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled isSaving] [text "Save"] ]
 
 translationForm : Translations -> Html Msg
 translationForm translations =
@@ -73,7 +78,7 @@ translationRow key value =
       ] []
     ]
   ]
-  
+
 -- Application specifics
 
 init : () -> (Model, Cmd Msg)
@@ -83,7 +88,8 @@ view : Model -> Html Msg
 view model =
   case model of
     Loading -> div [] [text "Loading..."]
-    Loaded translations -> div [] [ translationPage translations ]
+    Loaded translations -> div [] [ translationPage translations False ]
+    Saving translations -> div [] [ translationPage translations True ]
     Error -> div [] [text "Error loading translations!"]
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -101,12 +107,16 @@ update msg model =
         _ -> (model, Cmd.none)
     SaveTranslations ->
       case model of
-        Loaded translations -> (model, saveTranslations translations)
+        Loaded translations -> (Saving translations, saveTranslations translations)
         _ -> (model, Cmd.none)
     SavedTranslations (Ok ()) ->
-      (model, Cmd.none)
+      case model of
+        Saving translations -> (Loaded translations, Cmd.none)
+        _ -> (model, Cmd.none)
     SavedTranslations (Err httpError) ->
-      (model, Cmd.none)
+      case model of
+        Saving translations -> (Loaded translations, Cmd.none)
+        _ -> (model, Cmd.none)
 
 main : Program () Model Msg
 main = Browser.element { init = init, update = update, view = view, subscriptions = \_ -> Sub.none }
