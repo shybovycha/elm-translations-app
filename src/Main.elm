@@ -19,11 +19,11 @@ translationForm model =
     translationEntries = Dict.toList model
     rows = List.map (\(key, value) -> translationRow key value) translationEntries
   in
-    div [] rows
+    div [Html.Attributes.style "display" "flex", Html.Attributes.style "flex-direction" "column"] rows
 
 translationRow : String -> String -> Html Msg
 translationRow key value =
-  div [] [
+  div [Html.Attributes.style "display" "flex", Html.Attributes.style "flex-direction" "row"] [
     div [] [text key],
     div [] [
       input [Html.Attributes.value value] []
