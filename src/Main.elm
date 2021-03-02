@@ -8,7 +8,7 @@ type alias Translations = Dict String String
 
 type alias Model = Translations
 
-type Msg = ...
+type Msg = UpdateTranslation String String
 
 init : Model
 init = Dict.empty
@@ -19,6 +19,7 @@ view model = text "Hello, translations!"
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    ...
+    UpdateTranslation key value ->
+      Dict.update key (\_ -> Just value) model
 
 main = Browser.sandbox { init = init, update = update, view = view }
