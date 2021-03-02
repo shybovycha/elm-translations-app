@@ -12,15 +12,35 @@ type alias Model = Translations
 
 type Msg = UpdateTranslation String String
 
+-- View helpers
+translationForm : Translations -> Html Msg
+translationForm model =
+  let
+    translationEntries = Dict.toList model
+    rows = List.map (\(key, value) -> translationRow key value) translationEntries
+  in
+    div [] rows
+
+translationRow : String -> String -> Html Msg
+translationRow key value =
+  div [] [
+    div [] [text key],
+    div [] [
+      input [Html.Attributes.value value] []
+    ]
+  ]
+
+-- Application stuff
+
 init : Model
 init = Dict.empty
 
 view : Model -> Html Msg
 view model =
   let
-    children = List.map (\(key, value) -> div [] [div [] [text key], div [] [input [Html.Attributes.value value] []]]) (Dict.toList model)
+    translations_form = translationForm model
   in
-    div [] children
+    div [] [translations_form]
 
 update : Msg -> Model -> Model
 update msg model =
