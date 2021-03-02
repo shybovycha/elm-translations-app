@@ -57,7 +57,9 @@ translationPage translations isSaving =
 
 translationPageControls : Bool -> Html Msg
 translationPageControls isSaving =
-  div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled isSaving] [text "Save"] ]
+  if isSaving
+  then div [] [ button [Html.Events.onClick SaveTranslations, Html.Attributes.disabled True] [text "Saving..."] ]
+  else div [] [ button [Html.Events.onClick SaveTranslations] [text "Save"] ]
 
 translationForm : Translations -> Html Msg
 translationForm translations =
